@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GPA-VGGT</title>
+  <meta name="description" content="GPA-VGGT: Geometry-Preserving Acceleration of VGGT. Training-free acceleration that keeps over 99% of VGGT's AUC@3 pose accuracy. WACV 2027.">
+  <meta name="keywords" content="GPA-VGGT, VGGT, token merging, 3D reconstruction, camera pose, WACV 2027">
+  <meta property="og:title" content="GPA-VGGT: Geometry-Preserving Acceleration of VGGT">
+  <meta property="og:description" content="Training-free acceleration of VGGT that keeps over 99% of its AUC@3 pose accuracy. WACV 2027.">
+  <meta property="og:image" content="static/img/overview.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" href="static/css/style.css">
+
+  <script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  } }
+  </script>
+  <!-- Start downloading the 3D viewer's dependencies and first scene with the page itself. -->
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js">
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js">
+  <link rel="preload" href="static/clouds/scenes.json" as="fetch" crossorigin>
+  <link rel="preload" href="static/clouds/co3d_broccoli/ours.bin" as="fetch" crossorigin>
+  <link rel="preload" href="static/clouds/co3d_broccoli/fastvggt.bin" as="fetch" crossorigin>
+</head>
+<body>
+
+<!-- ============================== HERO ============================== -->
+<header class="hero">
+  <div class="wrap">
+    <h1>
+      <span class="brand">GPA-VGGT</span>
+      <span class="subtitle">Geometry-Preserving Acceleration of VGGT</span>
+    </h1>
+
+    <p class="authors">
+      <span>Muyeol Sung</span>
+      <span>Jangwon Kim</span>
+      <span>Jongwoo Lim</span>
+    </p>
+    <p class="affil">Seoul National University</p>
+    <p class="venue">WACV 2027</p>
+
+    <!-- TODO(links): replace the "#" hrefs and drop data-todo once each link is live. -->
+    <nav class="links">
+      <a class="btn" href="#" data-todo>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20 12 4l8 16M7.5 13h9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>arXiv</span>
+      </a>
+      <a class="btn" href="#" data-todo>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.08 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>
+        <span>Code</span>
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ============================== ABSTRACT ============================== -->
+<section class="box" id="abstract">
+  <h2>Abstract</h2>
+  <p class="tldr"><b>TL;DR</b> Training-free acceleration of VGGT that runs at speeds comparable to prior
+    accelerators (2.58× at 200 frames) while keeping over 99% of VGGT's camera-pose accuracy under the
+    strict AUC@3 metric.</p>
+  <p class="prose">
+    Feed-forward geometry models such as VGGT recover camera parameters, depth maps, and point maps from
+    one to hundreds of views in a single forward pass, making them powerful backbones for multi-view 3D
+    perception. However, VGGT's global attention is quadratic in the number of frames and dominates
+    end-to-end runtime on long sequences, which has motivated a range of training-free efficiency methods
+    such as token merging. These methods, however, come with a drop in accuracy that makes them hard to use
+    in place of VGGT. We propose GPA-VGGT, a training-free acceleration method that replaces global
+    attention in early blocks with frame attention augmented by a shared cross-frame K/V set. In the
+    remaining blocks, we merge only keys and values while preserving all queries, restore the attention
+    mass of the tokens each merged key represents, and randomly project the matching metric to 128
+    dimensions to reduce matching cost. Across diverse multi-view geometry tasks, GPA-VGGT provides
+    training-free acceleration at speedups comparable to prior work while preserving the information
+    required for precise geometric estimation, retaining over 99% of VGGT's pose accuracy under AUC@3.
+  </p>
+</section>
+
+<!-- ============================== METHOD ============================== -->
+<section class="box" id="method">
+  <h2>Method</h2>
+  <figure class="fig overview">
+    <img src="static/img/overview.png" alt="Overview of GPA-VGGT. Early blocks 0 to 8 use frame attention plus a shared cross-frame K/V set. Later blocks 9 to 23 keep all queries and merge only K/V, with a weaker merge ratio in core blocks 13 to 16." loading="lazy">
+  </figure>
+
+  <div class="cards two">
+    <article class="card">
+      <span class="pill">Query-Preserving K/V Merging</span>
+      <span class="where">blocks 9–23</span>
+      <p>Every query attends to the merged key set and keeps its own output. Each merged key represents
+        <span class="m">s_j</span> tokens, so its logit gets <span class="m">+\log s_j</span>. The result is
+        exact when the keys in a group coincide.</p>
+      <div class="eq" data-tex="o_i=\sum_{j}\operatorname{softmax}_j\!\Big(\tfrac{q_i^\top \bar k_j}{\sqrt{d}}+\log s_j\Big)\,\bar v_j"></div>
+    </article>
+    <article class="card">
+      <span class="pill">Pooled Cross-Frame Broadcast</span>
+      <span class="where">blocks 0–8</span>
+      <p>Each query sees its own frame's patches, the camera and register tokens of all frames, and
+        content-adaptive pooled summaries of all frames. The shared set is built once per block, with no
+        masks or per-frame copies.</p>
+      <div class="eq" data-tex="\mathcal{K}_f=\big[K^\text{patch}_f;\;K^\text{special}_{1:F};\;\bar K^\text{pool}_{1:F}\big]"></div>
+    </article>
+    <article class="card">
+      <span class="pill">Sensitivity-Aware Core Blocks</span>
+      <span class="where">blocks 13–16</span>
+      <p>Middle blocks attend sharply to a few cross-view correspondences, and errors made there are
+        amplified downstream. They are merged at ratio 0.2 instead of 0.9. The set is chosen without
+        ground truth.</p>
+    </article>
+    <article class="card">
+      <span class="pill">Low-Dimensional Matching</span>
+      <span class="where">128-d projection</span>
+      <p>Matching scores only feed an argmax, so we compute them after a fixed 1024→128 Gaussian
+        projection. Matching gets about 7–8× cheaper, and the groups stay similarity-based.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ============================== 3D COMPARISON ============================== -->
+<section class="box" id="compare">
+  <h2>Reconstruction Under Predicted Poses</h2>
+  <p class="section-sub">Pick a scene below and orbit both views together.</p>
+
+  <div class="viewers">
+    <div class="viewer" id="viewer-left">
+      <div class="viewer-label ours">GPA-VGGT (ours)</div>
+      <div class="viewer-stat" id="stat-left"></div>
+      <div class="viewer-loading" hidden></div>
+    </div>
+    <div class="viewer" id="viewer-right">
+      <label class="viewer-label select">
+        <span class="sr-only">Compare against</span>
+        <select id="baseline">
+          <option value="vanilla">VGGT</option>
+          <option value="fastvggt" selected>FastVGGT</option>
+          <option value="avggt_s2">AVGGT(2)</option>
+        </select>
+      </label>
+      <div class="viewer-stat" id="stat-right"></div>
+      <div class="viewer-loading" hidden></div>
+    </div>
+  </div>
+
+  <div class="viewer-bar">
+    <div class="tips">Drag to rotate · Scroll to zoom · Right-drag or Shift-drag to pan</div>
+    <div class="viewer-controls">
+      <label for="pt-size">Point size</label>
+      <input id="pt-size" type="range" min="0.4" max="3" step="0.1" value="1">
+      <button type="button" id="reset-view">Reset view</button>
+    </div>
+  </div>
+
+  <div class="scene-strip" id="scene-strip" role="tablist" aria-label="Scene"></div>
+
+  <p class="viewer-note">Ten input frames per scene (32 for ScanNet). The CO3D, 7-Scenes, NRGBD and RE10K scenes are the
+    examples from the paper's qualitative figures. Each
+    cloud is lifted from the method's own depth and predicted cameras, then aligned to ground truth by the
+    similarity that best fits its camera centres, so pose errors show up as doubled or torn geometry.
+    AUC@3 is for this one sequence.</p>
+</section>
+
+<!-- ============================== RESULTS ============================== -->
+<section class="box" id="results">
+  <h2>Results</h2>
+  <p class="section-sub">Same released VGGT checkpoint for every method, no training, bfloat16, one RTX A6000.</p>
+
+  <div class="tabs" data-tabs>
+    <div class="tab-list" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="t-pose">Camera pose</button>
+      <button role="tab" data-tab="t-lat">Runtime</button>
+    </div>
+
+    <div class="tab-panel" id="t-pose">
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr><th></th><th colspan="4" class="grp">CO3D</th><th colspan="4" class="grp">RE10K</th></tr>
+            <tr><th></th><th>AUC@3</th><th>@5</th><th>@10</th><th>@30</th><th>AUC@3</th><th>@5</th><th>@10</th><th>@30</th></tr>
+          </thead>
+          <tbody>
+            <tr class="ref"><td>vanilla VGGT</td><td>57.49</td><td>68.88</td><td>80.66</td><td>91.71</td><td>44.78</td><td>56.67</td><td>70.79</td><td>85.76</td></tr>
+            <tr><td>FastVGGT</td><td>41.56</td><td>55.97</td><td>72.61</td><td>88.38</td><td>37.56</td><td>50.52</td><td>66.38</td><td>83.69</td></tr>
+            <tr><td>FasterVGGT</td><td>16.05</td><td>33.80</td><td>60.00</td><td>83.91</td><td>22.00</td><td>34.09</td><td>51.47</td><td>73.85</td></tr>
+            <tr><td>AVGGT(2)</td><td class="u">51.87</td><td class="u">64.55</td><td class="u">78.02</td><td class="u">90.65</td><td class="b">44.68</td><td class="b">56.49</td><td class="b">70.66</td><td class="b">85.70</td></tr>
+            <tr><td>AVGGT(4)</td><td>47.08</td><td>60.75</td><td>75.72</td><td>89.72</td><td>42.53</td><td>54.78</td><td>69.50</td><td>85.21</td></tr>
+            <tr class="ours"><td>GPA-VGGT</td><td class="b">56.94</td><td class="b">68.54</td><td class="b">80.41</td><td class="b">91.57</td><td class="u">44.45</td><td class="u">56.33</td><td class="u">70.46</td><td class="u">85.54</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cap">Ten frames per sequence, relative pose errors over all frame pairs. Bold and underline mark
+        the best and second best, excluding vanilla VGGT. Under AUC@30 most accelerators stay close to VGGT;
+        under AUC@3 the gaps open. AVGGT(2)'s fixed-stride subsampling holds on RE10K's high-overlap indoor
+        views but drops on CO3D's wider baselines.</p>
+    </div>
+
+    <div class="tab-panel" id="t-lat" hidden>
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr><th>time (s) ↓</th><th>10</th><th>32</th><th>64</th><th>100</th><th>200</th><th>500</th></tr>
+          </thead>
+          <tbody>
+            <tr class="ref"><td>vanilla VGGT</td><td>0.84</td><td>3.84</td><td>12.46</td><td>24.01</td><td>86.78</td><td>513.78</td></tr>
+            <tr><td>FastVGGT</td><td>0.85</td><td>2.81</td><td>6.46</td><td>11.71</td><td>33.91</td><td>169.43</td></tr>
+            <tr><td>FasterVGGT</td><td>0.78</td><td>2.66</td><td>6.18</td><td>11.29</td><td>32.27</td><td>OOM</td></tr>
+            <tr><td>AVGGT(2)</td><td>0.78</td><td>2.76</td><td>6.70</td><td>12.66</td><td>37.02</td><td>184.03</td></tr>
+            <tr><td>AVGGT(4)</td><td>0.76</td><td>2.51</td><td>5.58</td><td>9.86</td><td>25.82</td><td>111.74</td></tr>
+            <tr class="ours"><td>GPA-VGGT</td><td>0.78</td><td>2.76</td><td>6.49</td><td>11.92</td><td>33.65</td><td>158.63</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cap">End-to-end runtime of the whole forward pass on one A6000. At 10 frames no method exceeds
+        1.2× over vanilla; at 500 frames speedups range from 2.8× to 4.6× (GPA-VGGT 3.24×, AVGGT(4) 4.60×), and
+        FasterVGGT runs out of memory.</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ============================== BIBTEX ============================== -->
+<section class="box" id="bibtex">
+  <h2>BibTeX</h2>
+  <div class="bib">
+    <button class="copy" type="button">Copy</button>
+<pre><code id="bib-text">@inproceedings{sung2027gpavggt,
+  title     = {{GPA-VGGT}: Geometry-Preserving Acceleration of {VGGT}},
+  author    = {Sung, Muyeol and Kim, Jangwon and Lim, Jongwoo},
+  booktitle = {Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)},
+  year      = {2027}
+}</code></pre>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <p>GPA-VGGT builds on <a href="https://github.com/facebookresearch/vggt">VGGT</a> and
+      <a href="https://github.com/mystorm16/FastVGGT">FastVGGT</a>. The page layout follows
+      <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>; the point-cloud viewer uses
+      <a href="https://threejs.org/">three.js</a>.</p>
+  </div>
+</footer>
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="static/js/main.js"></script>
+<script type="module" src="static/js/viewer.js"></script>
+</body>
+</html>
