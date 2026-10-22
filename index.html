@@ -162,7 +162,7 @@
 
   <div class="scene-strip" id="scene-strip" role="tablist" aria-label="Scene"></div>
 
-  <p class="viewer-note">Ten input frames per scene (32 for ScanNet). The CO3D, 7-Scenes, NRGBD and RE10K scenes are the
+  <p class="viewer-note">10 input frames per scene (32 for ScanNet). The CO3D, 7-Scenes, NRGBD and RE10K scenes are the
     examples from the paper's qualitative figures. Each
     cloud is lifted from the method's own depth and predicted cameras, then aligned to ground truth by the
     similarity that best fits its camera centres, so pose errors show up as doubled or torn geometry.
@@ -197,7 +197,7 @@
           </tbody>
         </table>
       </div>
-      <p class="cap">Ten frames per sequence, relative pose errors over all frame pairs. Bold and underline mark
+      <p class="cap">10 frames per sequence, relative pose errors over all frame pairs. Bold and underline mark
         the best and second best, excluding vanilla VGGT. Under AUC@30 most accelerators stay close to VGGT;
         under AUC@3 the gaps open. AVGGT(2)'s fixed-stride subsampling holds on RE10K's high-overlap indoor
         views but drops on CO3D's wider baselines.</p>
