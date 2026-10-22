@@ -75,6 +75,7 @@ p { margin: 0; }
 /* ---------- abstract ---------- */
 .tldr { background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: 10px; padding: 14px 18px; text-align: center; font-size: 1.05rem; }
 .tldr b { color: var(--accent); margin-right: 6px; }
+#abstract .tldr { margin-bottom: 28px; }  /* TL;DR sits above the Abstract heading: give it room */
 .prose { max-width: 72ch; margin: 0 auto; text-align: justify; hyphens: auto; color: var(--ink-2); }
 
 /* ---------- cards ---------- */
