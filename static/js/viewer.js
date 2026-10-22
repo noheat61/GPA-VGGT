@@ -25,19 +25,27 @@ async function getBuffer(path) {
   if (inline) return (await fetch(`data:application/octet-stream;base64,${inline}`)).arrayBuffer();
   const res = await fetch(BASE + path);
   if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+  // Content-Length is the size on the wire. GitHub Pages gzips these files, so it is
+  // smaller than the decoded body the stream yields: use it only for the progress bar
+  // and collect the chunks instead of writing into a buffer of that size.
   const total = +res.headers.get("Content-Length") || 0;
   if (!res.body || !total) return res.arrayBuffer();
-  const out = new Uint8Array(total);
+  const encoded = !!res.headers.get("Content-Encoding");
+  const chunks = [];
   const reader = res.body.getReader();
   let loaded = 0;
-  progress.set(path, { loaded, total });
+  progress.set(path, { loaded: 0, total });
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
-    out.set(value, loaded);
+    chunks.push(value);
     loaded += value.length;
-    progress.set(path, { loaded, total });
+    progress.set(path, { loaded: encoded ? Math.min(loaded, total * 0.99) : loaded, total });
   }
+  const out = new Uint8Array(loaded);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.length; }
+  progress.set(path, { loaded: total, total });
   return out.buffer;
 }
 
