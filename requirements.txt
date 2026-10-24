@@ -1,0 +1,14 @@
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+torch==2.11.0+cu128
+torchvision==0.26.0+cu128
+triton==3.6.0
+numpy==2.2.6
+Pillow==12.3.0
+huggingface_hub==1.25.0
+einops==0.8.2
+matplotlib==3.10.9
+scipy==1.15.3
+opencv-python==5.0.0.93
+imageio==2.37.3
+open3d==0.19.0
