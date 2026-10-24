@@ -56,24 +56,6 @@ The default model configuration of every script is GPA-VGGT as used in the paper
 python eval/eval_co3d.py --fast_eval --num_frames 10 --seed 0 --deterministic
 ```
 
-<details>
-<summary><b>Other benchmarks</b></summary>
-
-- **RealEstate10K pose:** fetch the frames with `eval/re10k_fetch.py`, then
-  ```bash
-  python eval/eval_re10k.py --re10k_dir <root> --num_frames 10 --deterministic
-  ```
-- **Point-map reconstruction (Acc / Comp / NC):** needs the published sequence maps from the evaluation code of [π³](https://github.com/yyfz/Pi3), cloned as `Pi3-eval/` next to this repository.
-  ```bash
-  python eval/eval_mv_recon.py --dataset nrgbd --protocol pi3 --kf 100 --deterministic
-  ```
-- **End-to-end latency:**
-  ```bash
-  python eval/bench_e2e.py --frames 200 --label gpavggt
-  ```
-
-</details>
-
 ## License
 This repository is released under the [VGGT License](./LICENSE.txt).
 
